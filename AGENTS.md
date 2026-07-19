@@ -1,4 +1,4 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 ## Project
 
@@ -60,7 +60,7 @@ Examples of features that should NOT be added:
 - Notifications
 - Admin dashboard
 - Payment
-- Recommendation system
+- Personalized recommendation system
 - Mobile App
 
 ---

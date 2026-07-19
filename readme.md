@@ -1,4 +1,4 @@
-# Film Opportunity Radar
+﻿# Film Opportunity Radar
 
 An AI-assisted tool that helps film creators discover content opportunities from industry events.
 
@@ -118,7 +118,7 @@ Possible future improvements include:
 - More event sources
 - User accounts
 - Cloud Watchlist
-- Better recommendation strategy
+- Better opportunity ranking strategy
 
 These features are intentionally excluded from the current MVP.
 
