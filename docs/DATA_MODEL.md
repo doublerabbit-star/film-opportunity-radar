@@ -48,7 +48,8 @@ The shared `FilmEvent` type contains all of these fields.
 | `title` | `string` | AI Generator | Opportunity headline |
 | `shortTitle` | `string` | AI Generator | Compact display headline |
 | `description` | `string` | AI Generator | Short opportunity summary |
-| `score` | `number` | Opportunity Engine | Numeric score used for ranking |
+| `editorialWeight` | `"high" \| "medium" \| "low"` | AI Generator | Qualitative importance signal, one input to the Opportunity Engine's score calculation. Stored alongside the record for auditability, but is never displayed directly and never substitutes for `score` or `signal`. |
+| `score` | `number` | Opportunity Engine | Numeric score used for ranking, computed from rule-based factors plus `editorialWeight` |
 | `signal` | `"Peak" \| "Rising" \| "Emerging"` | Opportunity Engine | Score-derived status |
 | `image` | `string` | Metadata Service | TMDb poster URL or local fallback |
 | `imageAlt` | `string` | Metadata Service | Accessible image description |
@@ -87,17 +88,19 @@ RSS Collector
   -> preserves source, sourceUrl, title, description, and publication time
 Event Parser
   -> normalizes FilmEvent and creates its stable id
+Rule Engine
+  -> filters out irrelevant, duplicate, stale, or low-value events before any paid calls
 TMDb Metadata Service
-  -> adds the explicit movie association and display image when available
-Opportunity Engine
-  -> determines category, score, signal, trend, volume, and opportunity window
+  -> adds the explicit movie association and display image when available, for events that passed the Rule Engine
 Gemini AI Generator
-  -> creates title, shortTitle, description, whyItMatters, contentAngles, and titleIdeas
+  -> creates title, shortTitle, description, whyItMatters, contentAngles, titleIdeas, and a qualitative editorialWeight
+Opportunity Engine
+  -> determines category, score, signal, trend, volume, and opportunity window, using editorialWeight as one input among rule-based factors
 Page / Persistence
   -> ranks by score, displays the result, and stores the event relationship
 ```
 
-Gemini must not calculate the score, assign rank, or replace source attribution. Generated output must be validated before it is stored or rendered.
+Gemini must not calculate the final score, assign rank, or replace source attribution. It may output a qualitative `editorialWeight` (high / medium / low) as one input to the Opportunity Engine, but the Opportunity Engine — not Gemini — always determines the final `score` and `signal`. Generated output must be validated before it is stored or rendered.
 
 ## Supabase Fit
 

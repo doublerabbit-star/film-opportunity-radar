@@ -66,7 +66,8 @@ film-opportunity-radar/
 │   ├── PRD.md
 │   ├── ARCHITECTURE.md
 │   ├── DATA_MODEL.md
-│   └── DESIGN.md
+│   ├── DESIGN.md
+│   └── RSS.md
 │
 ├── README.md
 └── AGENTS.md
@@ -82,6 +83,7 @@ film-opportunity-radar/
 | docs/ARCHITECTURE.md | Technical architecture |
 | docs/DATA_MODEL.md | MVP data and pipeline contract |
 | docs/DESIGN.md | Product design direction |
+| docs/RSS.md | RSS sources, normalization, and endpoint behavior |
 | AGENTS.md | AI development guidelines |
 
 Please read these documents before implementing new features.

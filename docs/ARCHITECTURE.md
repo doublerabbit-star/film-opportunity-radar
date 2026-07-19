@@ -195,13 +195,16 @@ RSS / YouTube
   Event Parser
         │
         ▼
+  Rule Engine
+        │
+        ▼
  TMDb Metadata
         │
         ▼
-Opportunity Engine
+ AI Generator
         │
         ▼
- AI Generator
+Opportunity Engine
         │
         ▼
  Today's Opportunities
@@ -220,7 +223,7 @@ Opportunity Engine
 - RSS
 - 官方 YouTube
 
-输出统一的原始事件。
+输出统一的原始事件。MVP RSS 实现位于 `lib/rss/`，临时只读验证端点为 `GET /api/rss`；具体来源、标准化、去重与失败处理规则见 `docs/RSS.md`。
 
 ---
 
@@ -238,6 +241,21 @@ Opportunity Engine
 
 ---
 
+### Rule Engine
+
+对标准化后的 Event 做轻量过滤，减少进入后续付费环节（TMDb、AI Generator）的事件数量。
+
+例如：
+
+- 去重（重复报道同一事件）
+- 过滤与电影无关的内容
+- 过滤过旧的事件
+- 过滤价值明显很低的简讯
+
+过滤逻辑完全由代码实现，不依赖 AI。这一层不判断"值不值得做内容"，只负责排除明显不需要进入分析环节的事件。
+
+---
+
 ### TMDb Metadata
 
 根据电影名称获取更多信息。
@@ -250,7 +268,21 @@ Opportunity Engine
 - 演员
 - 上映日期
 
-丰富事件内容。
+丰富事件内容，为 AI Generator 提供分析所需的上下文。只对通过 Rule Engine 的事件查询，避免浪费调用。
+
+---
+
+### AI Generator
+
+根据 Event 和 TMDb 上下文生成：
+
+- 创作角度
+- 内容切入点
+- 标题建议
+- 简要分析
+- 一个定性的编辑重要性信号（`editorialWeight`，如 high / medium / low）
+
+AI 只负责内容生成和提供参考性的定性判断，不计算最终分数，不决定排序。
 
 ---
 
@@ -258,22 +290,9 @@ Opportunity Engine
 
 根据固定规则计算 Opportunity Score。
 
-评分完全由代码实现。
+评分依据包括发布时间、事件类型、时效性等代码规则，并将 AI Generator 产出的 `editorialWeight` 作为其中一个参考因子。
 
-AI 不参与评分。
-
----
-
-### AI Generator
-
-根据事件生成：
-
-- 创作角度
-- 内容切入点
-- 标题建议
-- 简要分析
-
-AI 只负责内容生成。
+最终的 Score 和 Signal（Peak / Rising / Emerging）完全由代码计算，AI 不直接给出分数或排序。
 
 ---
 
@@ -288,11 +307,13 @@ Collector
     ↓
 Parser
     ↓
+Rule Engine
+    ↓
 Metadata
     ↓
-Score
-    ↓
 AI
+    ↓
+Score
     ↓
 Page
 ```
@@ -339,7 +360,22 @@ Event
 
 ---
 
-## Step 3：补充电影信息
+## Step 3：规则过滤
+
+Rule Engine 对 Event 做去重和过滤。
+
+排除：
+
+- 与电影无关的内容
+- 重复报道
+- 过旧的事件
+- 价值明显很低的简讯
+
+只有通过过滤的 Event 才会进入下一步。这样可以减少 TMDb 和 AI Generator 的调用量。
+
+---
+
+## Step 4：补充电影信息
 
 根据电影名称查询 TMDb。
 
@@ -353,13 +389,27 @@ Event
 
 输出：
 
-完整的 Movie Metadata。
+完整的 Movie Metadata，供 AI Generator 使用。
 
 ---
 
-## Step 4：计算 Opportunity
+## Step 5：AI 生成内容建议
 
-根据预设规则计算：
+AI 根据 Event 和 Movie Metadata 输出：
+
+- 内容创作方向
+- 可讨论的话题
+- 标题建议
+- 简短分析
+- 定性的编辑重要性信号（`editorialWeight`）
+
+AI 不输出最终分数，也不判断是否为机会。
+
+---
+
+## Step 6：计算 Opportunity
+
+Opportunity Engine 根据预设规则计算：
 
 Opportunity Score
 
@@ -369,19 +419,9 @@ Opportunity Score
 - 发布时间
 - 热度
 - 内容价值
+- AI Generator 提供的 `editorialWeight`
 
-所有规则由代码控制。
-
----
-
-## Step 5：AI 生成内容建议
-
-AI 根据 Event 输出：
-
-- 内容创作方向
-- 可讨论的话题
-- 标题建议
-- 简短分析
+最终的分数和排序由代码控制，AI 的判断只是其中一个参考因子。
 
 最终结果展示在 Today 页面。
 
@@ -402,7 +442,8 @@ film-opportunity-radar/
 │   ├── PRD.md
 │   ├── ARCHITECTURE.md
 │   ├── DATA_MODEL.md
-│   └── DESIGN.md
+│   ├── DESIGN.md
+│   └── RSS.md
 │
 ├── README.md
 ├── AGENTS.md
@@ -502,7 +543,7 @@ film-opportunity-radar/
 
 # 6. 核心模块
 
-整个系统由五个核心模块组成，各模块职责明确，通过统一的数据结构进行协作。
+整个系统由六个核心模块组成，各模块职责明确，通过统一的数据结构进行协作。
 
 ---
 
@@ -551,7 +592,33 @@ Parser 不负责业务判断，只负责数据整理。
 
 ---
 
-## 6.3 Metadata Service
+## 6.3 Rule Engine
+
+### 职责
+
+对 Event 做轻量过滤和去重，减少进入 TMDb 和 AI Generator 的事件数量。
+
+### 工作内容
+
+- 过滤与电影无关的内容
+- 去除重复报道
+- 过滤过旧的事件
+- 过滤价值明显很低的简讯
+
+### 输出
+
+过滤后的 Event 子集
+
+### 不负责
+
+- 判断事件是否值得做内容（这是 AI Generator 和 Opportunity Engine 的工作）
+- 计算分数
+
+过滤逻辑全部由代码实现，不依赖 AI。
+
+---
+
+## 6.4 Metadata Service
 
 ### 职责
 
@@ -566,11 +633,29 @@ Parser 不负责业务判断，只负责数据整理。
 - 演员
 - 简介
 
-如果未查询到电影，则保留已有事件信息，不中断整个流程。
+只对通过 Rule Engine 的 Event 查询。如果未查询到电影，则保留已有事件信息，不中断整个流程。
 
 ---
 
-## 6.4 Opportunity Engine
+## 6.5 AI Generator
+
+### 职责
+
+基于 Event 和 Movie Metadata 生成适合创作者参考的内容建议。
+
+输出内容包括：
+
+- 创作角度
+- 可讨论的话题
+- 标题建议
+- 简要分析
+- 定性的编辑重要性信号（`editorialWeight`：high / medium / low），供 Opportunity Engine 参考
+
+AI 不计算最终分数，不决定排序，不判断事件是否为机会。这些仍然是代码的职责。
+
+---
+
+## 6.6 Opportunity Engine
 
 ### 职责
 
@@ -582,25 +667,9 @@ Parser 不负责业务判断，只负责数据整理。
 - 事件类型
 - 内容价值
 - 时效性
+- AI Generator 提供的 `editorialWeight`（作为参考因子之一，不是唯一依据）
 
-评分逻辑全部由代码实现，不依赖 AI。
-
----
-
-## 6.5 AI Generator
-
-### 职责
-
-基于 Event 生成适合创作者参考的内容建议。
-
-输出内容包括：
-
-- 创作角度
-- 可讨论的话题
-- 标题建议
-- 简要分析
-
-AI 不参与任何业务规则计算。
+评分逻辑全部由代码实现。AI 的判断只是输入之一，不直接产出最终分数或排序。
 
 ---
 
@@ -714,6 +783,7 @@ RSS、Gemini 与 Supabase 之间的最小字段契约见 `docs/DATA_MODEL.md`。
 - docs/ARCHITECTURE.md
 - docs/DATA_MODEL.md
 - docs/DESIGN.md
+- docs/RSS.md
 - AGENTS.md（如果存在）
 
 ---

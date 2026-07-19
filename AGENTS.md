@@ -19,6 +19,7 @@ Before implementing any feature, read the following documents in order:
 3. docs/ARCHITECTURE.md
 4. docs/DATA_MODEL.md
 5. docs/DESIGN.md
+6. docs/RSS.md
 
 These documents define the product scope and technical architecture.
 
