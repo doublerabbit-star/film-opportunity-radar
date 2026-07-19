@@ -284,6 +284,8 @@ Opportunity Engine
 
 AI 只负责内容生成和提供参考性的定性判断，不计算最终分数，不决定排序。
 
+MVP Gemini 实现位于 `lib/opportunities/`，临时只读验证端点为 `GET /api/opportunities`；Prompt、预过滤、结构化验证和评分规则见 `docs/GEMINI.md`。
+
 ---
 
 ### Opportunity Engine
@@ -443,7 +445,8 @@ film-opportunity-radar/
 │   ├── ARCHITECTURE.md
 │   ├── DATA_MODEL.md
 │   ├── DESIGN.md
-│   └── RSS.md
+│   ├── RSS.md
+│   └── GEMINI.md
 │
 ├── README.md
 ├── AGENTS.md
@@ -784,6 +787,7 @@ RSS、Gemini 与 Supabase 之间的最小字段契约见 `docs/DATA_MODEL.md`。
 - docs/DATA_MODEL.md
 - docs/DESIGN.md
 - docs/RSS.md
+- docs/GEMINI.md
 - AGENTS.md（如果存在）
 
 ---

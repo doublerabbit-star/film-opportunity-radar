@@ -25,6 +25,7 @@ export type Opportunity = {
   title: string;
   shortTitle: string;
   description: string;
+  editorialWeight: "high" | "medium" | "low";
   score: number;
   signal: "Peak" | "Rising" | "Emerging";
   image: string;

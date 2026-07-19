@@ -20,6 +20,7 @@ Before implementing any feature, read the following documents in order:
 4. docs/DATA_MODEL.md
 5. docs/DESIGN.md
 6. docs/RSS.md
+7. docs/GEMINI.md
 
 These documents define the product scope and technical architecture.
 

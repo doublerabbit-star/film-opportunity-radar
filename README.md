@@ -67,7 +67,8 @@ film-opportunity-radar/
 │   ├── ARCHITECTURE.md
 │   ├── DATA_MODEL.md
 │   ├── DESIGN.md
-│   └── RSS.md
+│   ├── RSS.md
+│   └── GEMINI.md
 │
 ├── README.md
 └── AGENTS.md
@@ -84,6 +85,7 @@ film-opportunity-radar/
 | docs/DATA_MODEL.md | MVP data and pipeline contract |
 | docs/DESIGN.md | Product design direction |
 | docs/RSS.md | RSS sources, normalization, and endpoint behavior |
+| docs/GEMINI.md | Gemini analysis, filtering, and scoring behavior |
 | AGENTS.md | AI development guidelines |
 
 Please read these documents before implementing new features.
