@@ -30,6 +30,13 @@ type Opportunity = {
   angles: string[];
 };
 
+export type HomeMovieEnrichment = {
+  title: string;
+  posterUrl: string | null;
+  releaseDate: string;
+  overview: string;
+};
+
 const opportunities: Opportunity[] = [
   {
     slug: "quiet-film-paradox",
@@ -166,7 +173,7 @@ function SaveButton({ id, title, light = false }: { id: string; title: string; l
   );
 }
 
-function LeadOpportunity() {
+function LeadOpportunity({ movie }: { movie?: HomeMovieEnrichment }) {
   return (
     <section className="lead-wrap" aria-labelledby="lead-title">
       <SectionHeader label="Lead opportunity" count="01" />
@@ -197,7 +204,7 @@ function LeadOpportunity() {
         <dl className="metrics">
           <div><dt>Volume</dt><dd>2.4M / day</dd></div>
           <div><dt>7-day trend</dt><dd>+340%</dd></div>
-          <div><dt>Related</dt><dd>Mission: Impossible 9</dd></div>
+          <div><dt>Related film</dt><dd>{movie?.title || "Mission: Impossible 9"}{movie?.releaseDate ? ` / ${movie.releaseDate.slice(0, 4)}` : ""}</dd></div>
           <div className="window"><dt>Timing</dt><dd>3-day peak window</dd></div>
         </dl>
       </div>
@@ -205,11 +212,14 @@ function LeadOpportunity() {
   );
 }
 
-function OpportunityCard({ item }: { item: Opportunity }) {
+function OpportunityCard({ item, movie }: { item: Opportunity; movie?: HomeMovieEnrichment }) {
+  const image = movie?.posterUrl || item.image;
+  const imageAlt = movie?.posterUrl ? `${movie.title} poster` : item.imageAlt;
+
   return (
     <article className="opportunity-card" style={{ "--story-accent": item.accent } as React.CSSProperties}>
       <Link className="card-image-wrap" href={`/opportunities/${item.slug}`}>
-        <Image src={item.image} alt={item.imageAlt} fill sizes="(max-width: 800px) 100vw, 33vw" />
+        <Image src={image} alt={imageAlt} fill sizes="(max-width: 800px) 100vw, 33vw" />
         <div className="card-number">{item.number}</div>
         <div className="card-score"><span>Score</span><strong>{item.score}</strong></div>
       </Link>
@@ -218,6 +228,14 @@ function OpportunityCard({ item }: { item: Opportunity }) {
         <div className="card-meta"><span>{item.category}</span><span><i className="dot" />{item.signal}</span></div>
         <h3><Link href={`/opportunities/${item.slug}`}>{item.title}</Link></h3>
         <p className="card-dek">{item.description}</p>
+        {movie && (
+          <div className="card-film-reference">
+            <span>TMDb film reference</span>
+            <strong>{movie.title}</strong>
+            {movie.releaseDate && <small>Released {movie.releaseDate}</small>}
+            {movie.overview && <p>{movie.overview}</p>}
+          </div>
+        )}
         <div className="card-angles">
           <span className="eyebrow">Editorial openings</span>
           {item.angles.map((angle) => <p key={angle}>↳ {angle}</p>)}
@@ -261,15 +279,15 @@ function FilterPanel({ open, onClose }: { open: boolean; onClose: () => void }) 
   );
 }
 
-export function HomePage() {
+export function HomePage({ tmdbMovies = {} }: { tmdbMovies?: Record<string, HomeMovieEnrichment> }) {
   return (
     <EditorialShell>
       <main>
         <div className="main-column">
-          <LeadOpportunity />
+          <LeadOpportunity movie={tmdbMovies["sequel-anxiety"]} />
           <section id="signals" className="signals-section">
             <SectionHeader label="Today's signals" count="03" />
-            <div className="opportunity-grid">{opportunities.map((item) => <OpportunityCard item={item} key={item.title} />)}</div>
+            <div className="opportunity-grid">{opportunities.map((item) => <OpportunityCard item={item} movie={tmdbMovies[item.slug]} key={item.title} />)}</div>
           </section>
         </div>
         <NewsRail />
@@ -287,6 +305,10 @@ export function EditorialShell({ children, active = "Today" }: { children: React
       <div className="content-shell">
         <Masthead onMenu={() => setNavOpen(true)} onFilter={() => setFilterOpen(true)} />
         {children}
+        <footer className="site-footer">
+          <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+          <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">The Movie Database</a>
+        </footer>
       </div>
       {(navOpen || filterOpen) && <button className="page-scrim" onClick={() => { setNavOpen(false); setFilterOpen(false); }} aria-label="Close overlay" />}
       <FilterPanel open={filterOpen} onClose={() => setFilterOpen(false)} />

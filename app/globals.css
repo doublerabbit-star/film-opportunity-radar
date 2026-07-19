@@ -109,6 +109,11 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 290px; }
 .card-meta .dot { margin-right: 5px; }
 .card-copy h3 { margin: 18px 0 10px; font-family: Impact, "Arial Black", sans-serif; font-size: 27px; font-weight: 900; line-height: .98; text-transform: uppercase; }
 .card-dek { margin: 0; color: #69645d; font-family: Georgia, serif; font-size: 13px; line-height: 1.55; }
+.card-film-reference { margin-top: 18px; padding-top: 15px; border-top: 1px solid var(--line); }
+.card-film-reference > span { display: block; color: #9d978d; font-family: "Courier New", monospace; font-size: 8px; text-transform: uppercase; }
+.card-film-reference > strong { display: block; margin-top: 7px; font-family: Georgia, serif; font-size: 13px; font-weight: 400; }
+.card-film-reference > small { display: block; margin-top: 4px; color: #8f8980; font-family: "Courier New", monospace; font-size: 8px; text-transform: uppercase; }
+.card-film-reference > p { display: -webkit-box; overflow: hidden; margin: 9px 0 0; color: #77716a; font-family: Georgia, serif; font-size: 10px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .card-angles { margin-top: 24px; }
 .card-angles p { margin: 10px 0; font-size: 11px; line-height: 1.45; }
 .card-angles p::first-letter { color: var(--story-accent); }
@@ -146,6 +151,8 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 290px; }
 .apply-button { width: 100%; justify-content: center; background: var(--ink); color: var(--white); }
 .apply-button:hover { background: var(--signal); color: var(--ink); }
 .page-scrim { position: fixed; z-index: 50; inset: 0; border: 0; background: rgba(17,17,15,.45); cursor: pointer; }
+.site-footer { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 30px; border-top: 1px solid var(--line); background: var(--white); color: #8f8980; font-family: "Courier New", monospace; font-size: 8px; line-height: 1.5; text-transform: uppercase; }
+.site-footer a { color: #756000; text-decoration: underline; text-decoration-color: var(--signal); text-underline-offset: 3px; }
 
 /* Opportunity detail */
 .detail-main { display: block; }
@@ -276,6 +283,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 290px; }
   .news-rail { display: block; }
   .news-rail section, .news-rail section:last-child { display: block; border-right: 0; }
   .masthead-actions { gap: 0; }
+  .site-footer { align-items: flex-start; flex-direction: column; padding: 18px 20px; }
   .detail-back { padding: 0 18px; }
   .detail-back > span { display: none; }
   .detail-hero { height: 620px; min-height: 0; }
