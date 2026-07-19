@@ -5,6 +5,7 @@ export type FilmEvent = {
   sourceUrl: string;
   publishedAt: string;
   description?: string;
+  content?: string;
 };
 
 export type Movie = {

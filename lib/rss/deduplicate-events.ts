@@ -8,6 +8,9 @@ function fallbackKey(event: FilmEvent): string {
 }
 
 function selectRicherEvent(left: FilmEvent, right: FilmEvent): FilmEvent {
+  const contentDifference = (right.content?.length ?? 0) - (left.content?.length ?? 0);
+  if (contentDifference !== 0) return contentDifference > 0 ? right : left;
+
   return (right.description?.length ?? 0) > (left.description?.length ?? 0)
     ? right
     : left;

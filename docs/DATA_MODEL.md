@@ -30,6 +30,7 @@ The shared types use the following MVP contract.
 | `id` | `string` | Parser | Stable event identifier derived from the RSS item GUID or link |
 | `title` | `string` | Parser | Source event title |
 | `description` | `string?` | Parser | Cleaned source summary |
+| `content` | `string?` | Parser | Richest cleaned feed content or article excerpt available |
 | `source` | `string` | Collector | Human-readable publisher or feed name |
 | `sourceUrl` | `string` | Collector | Original item URL for attribution |
 | `publishedAt` | `string` | Parser | ISO 8601 publication timestamp |
@@ -85,7 +86,7 @@ The legacy names are no longer present in runtime data. UI components format tim
 
 ```text
 RSS Collector
-  -> preserves source, sourceUrl, title, description, and publication time
+  -> preserves source, sourceUrl, title, description, content, and publication time
 Event Parser
   -> normalizes FilmEvent and creates its stable id
 Rule Engine

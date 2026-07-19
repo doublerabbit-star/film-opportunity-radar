@@ -59,7 +59,8 @@ test("normalizes a representative RSS item", () => {
   assert.equal(event.source, source.name);
   assert.equal(event.sourceUrl, "https://example.com/new-film/?edition=west");
   assert.equal(event.publishedAt, "2026-07-19T08:30:00.000Z");
-  assert.equal(event.description, "A longer announcement with production details for readers.");
+  assert.equal(event.description, "A short announcement.");
+  assert.equal(event.content, "A longer announcement with production details for readers.");
 });
 
 test("normalizes a representative Atom item", () => {
@@ -71,6 +72,7 @@ test("normalizes a representative Atom item", () => {
   assert.equal(event.sourceUrl, "https://example.com/festival-opening");
   assert.equal(event.publishedAt, "2026-07-19T09:00:00.000Z");
   assert.equal(event.description, "The festival confirmed its opening selection.");
+  assert.equal(event.content, "The festival confirmed its opening selection.");
 });
 
 test("generates deterministic event IDs", () => {
@@ -102,11 +104,13 @@ test("deduplicates by canonical URL and preserves the richer event", () => {
     sourceUrl: "https://example.com/story",
     publishedAt: "2026-07-19T08:30:00.000Z",
     description: "Short.",
+    content: "Short content.",
   };
   const richer: FilmEvent = {
     ...base,
     id: "evt_rich",
     description: "A longer and more useful description of the same story.",
+    content: "A substantially richer body excerpt with more useful details about the same story.",
   };
 
   assert.deepEqual(deduplicateEvents([base, richer]), [richer]);

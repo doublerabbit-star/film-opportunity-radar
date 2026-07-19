@@ -28,12 +28,13 @@ The registry is maintained in `lib/rss/sources.ts`. The endpoint never accepts c
 | --- | --- |
 | `id` | SHA-256-derived deterministic ID; see below |
 | `title` | Cleaned item or entry title |
-| `description` | Longest available cleaned description, summary, or content excerpt, limited to 1,000 characters |
+| `description` | Cleaned description or summary, falling back to content and limited to 1,000 characters |
+| `content` | Richest cleaned content or article excerpt, falling back to the description/summary |
 | `source` | Configured publication display name |
 | `sourceUrl` | Canonical item link; a URL-form item GUID or Atom ID is the fallback |
 | `publishedAt` | Item publication date, then item updated date, serialized as ISO 8601 |
 
-Markup, scripts, styles, comments, unsafe tags, repeated whitespace, and common HTML entities are removed from text. The shared contract has no separate `summary`, `content`, `author`, or `categories` fields, so those fields are not added. The richest available excerpt is stored only as `description`.
+Markup, scripts, styles, comments, unsafe tags, repeated whitespace, and common HTML entities are removed from text. Feed summary variants normalize to `description`; the richest available excerpt normalizes to `content`. The shared contract does not include `author` or `categories`, so they remain parser-internal and are not returned.
 
 An item is skipped if it has no usable title, canonical article URL, or valid publication/updated date. The collector does not fabricate required values or use the collection time as an article timestamp.
 
@@ -56,7 +57,7 @@ Events are deduplicated across all feeds in two passes:
 1. Exact canonical `sourceUrl`.
 2. Configured source, normalized title, and UTC publication date.
 
-When duplicate records differ, the record with the longer cleaned description is retained. Results are sorted by `publishedAt` descending after deduplication.
+When duplicate records differ, the record with the longer cleaned content is retained, using description length as a tie-breaker. Results are sorted by `publishedAt` descending after deduplication.
 
 ## Failure Handling
 
@@ -88,5 +89,5 @@ The endpoint uses `Cache-Control: no-store` and is intended for development veri
 
 - These are broad publication feeds and can contain television, awards, labor, or media-business stories. Relevance filtering belongs to the later Rule Engine task.
 - Feed entries usually contain excerpts rather than full article text.
-- The current `FilmEvent` contract intentionally cannot preserve author, categories, or separate full content.
+- The current `FilmEvent` contract intentionally does not preserve author or categories.
 - There is no persistence or cross-request history, so deduplication applies only within one collection request.

@@ -114,12 +114,12 @@ export function normalizeFeedItem(source: RssSource, item: ParsedFeedItem): Film
 
   if (!title || !sourceUrl || !publishedAt) return null;
 
-  const descriptionCandidates = [item.description, item.content]
-    .map(cleanFeedText)
-    .filter(Boolean)
-    .sort((left, right) => right.length - left.length);
-  const description = descriptionCandidates[0]
-    ? truncateDescription(descriptionCandidates[0])
+  const cleanedDescription = cleanFeedText(item.description);
+  const cleanedContent = cleanFeedText(item.content);
+  const content = cleanedContent || cleanedDescription || undefined;
+  const descriptionSource = cleanedDescription || cleanedContent;
+  const description = descriptionSource
+    ? truncateDescription(descriptionSource)
     : undefined;
 
   return {
@@ -135,5 +135,6 @@ export function normalizeFeedItem(source: RssSource, item: ParsedFeedItem): Film
     sourceUrl,
     publishedAt,
     ...(description ? { description } : {}),
+    ...(content ? { content } : {}),
   };
 }
