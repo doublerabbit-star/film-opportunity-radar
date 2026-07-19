@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { mockOpportunities } from "@/lib/mock-opportunities";
 import { useWatchlist } from "@/lib/use-watchlist";
 
 type Opportunity = {
@@ -37,53 +38,36 @@ export type HomeMovieEnrichment = {
   overview: string;
 };
 
-const opportunities: Opportunity[] = [
-  {
-    slug: "quiet-film-paradox",
-    number: "02",
-    category: "Streaming economics",
-    title: "The quiet film paradox",
-    description: "Minimalist films outperform tent-poles on per-screen average by 4x.",
-    score: "8.1",
-    signal: "Rising",
-    image: "/images/quiet-cinema.png",
-    imageAlt: "A solitary audience member in an empty cinema",
-    accent: "#1e6f52",
-    window: "7-day window",
-    trend: "+112%",
-    angles: ["Why audiences are craving screen silence", "The algorithm finally rewards what film school taught"],
-  },
-  {
-    slug: "practical-effects-renaissance",
-    number: "03",
-    category: "Craft & production",
-    title: "Practical effects renaissance",
-    description: "Behind-the-scenes footage of handcrafted SFX is outpacing the films themselves.",
-    score: "7.8",
-    signal: "Rising",
-    image: "/images/practical-effects.png",
-    imageAlt: "A craftsperson lighting a miniature film set",
-    accent: "#b23b24",
-    window: "10-day window",
-    trend: "+89%",
-    angles: ["The death and rebirth of movie magic", "Why AI did not kill practical effects"],
-  },
-  {
-    slug: "female-debut-directors",
-    number: "04",
-    category: "Industry shift",
-    title: "Female debut directors at box office",
-    description: "Three top-ten global films this summer are debut features by women.",
-    score: "7.4",
-    signal: "Emerging",
-    image: "/images/debut-directors.png",
-    imageAlt: "Three film directors crossing a studio soundstage",
-    accent: "#1964ad",
-    window: "2-week window",
-    trend: "+67%",
-    angles: ["What changed in Hollywood financing", "The overlooked festivals that predicted this wave"],
-  },
-];
+const categoryAccents: Record<string, string> = {
+  "Cultural anxiety": "#7b2942",
+  "Streaming economics": "#1e6f52",
+  "Craft & production": "#b23b24",
+  "Industry shift": "#1964ad",
+  Exhibition: "#a76d00",
+};
+
+const opportunities: Opportunity[] = mockOpportunities
+  .filter((item) => item.id !== "sequel-anxiety")
+  .map((item, index) => ({
+    slug: item.id,
+    number: String(index + 2).padStart(2, "0"),
+    category: item.category,
+    title: item.title,
+    description: item.description,
+    score: item.score,
+    signal: item.signal,
+    image: item.image,
+    imageAlt: item.imageAlt,
+    accent: categoryAccents[item.category] ?? "#1e6f52",
+    window: item.window,
+    trend: item.trend,
+    angles: item.angles.slice(0, 2),
+  }));
+
+const signalCounts = mockOpportunities.reduce<Record<Opportunity["signal"], number>>(
+  (counts, item) => ({ ...counts, [item.signal]: counts[item.signal] + 1 }),
+  { Peak: 0, Rising: 0, Emerging: 0 },
+);
 
 const news = [
   ["04:12", "Shrek 5 projections revised upward by $80M"],
@@ -94,7 +78,7 @@ const news = [
 ];
 
 const nav = [
-  ["Today", "/", "5"],
+  ["Today", "/", String(mockOpportunities.length)],
   ["Trending", "/#signals", "12"],
   ["Archive", "/#signals", ""],
   ["Saved", "/watchlist", "3"],
@@ -132,9 +116,9 @@ function Sidebar({ open, onClose, active = "Today" }: { open: boolean; onClose: 
       </div>
       <div className="signal-key">
         <p className="eyebrow">Today&apos;s signals</p>
-        <p><i className="dot peak" />Peak <strong>1</strong></p>
-        <p><i className="dot rising" />Rising <strong>2</strong></p>
-        <p><i className="dot emerging" />Emerging <strong>1</strong></p>
+        <p><i className="dot peak" />Peak <strong>{signalCounts.Peak}</strong></p>
+        <p><i className="dot rising" />Rising <strong>{signalCounts.Rising}</strong></p>
+        <p><i className="dot emerging" />Emerging <strong>{signalCounts.Emerging}</strong></p>
       </div>
     </aside>
   );
@@ -286,7 +270,7 @@ export function HomePage({ tmdbMovies = {} }: { tmdbMovies?: Record<string, Home
         <div className="main-column">
           <LeadOpportunity movie={tmdbMovies["sequel-anxiety"]} />
           <section id="signals" className="signals-section">
-            <SectionHeader label="Today's signals" count="03" />
+            <SectionHeader label="Today's signals" count={String(opportunities.length).padStart(2, "0")} />
             <div className="opportunity-grid">{opportunities.map((item) => <OpportunityCard item={item} movie={tmdbMovies[item.slug]} key={item.title} />)}</div>
           </section>
         </div>
