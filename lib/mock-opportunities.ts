@@ -1,5 +1,7 @@
 export type MockOpportunity = {
   id: string;
+  tmdbMovieId?: number;
+  tmdbTitle?: string;
   category: string;
   title: string;
   shortTitle: string;
@@ -40,6 +42,8 @@ export const mockOpportunities: MockOpportunity[] = [
   },
   {
     id: "quiet-film-paradox",
+    tmdbMovieId: 916405,
+    tmdbTitle: "The Quiet Girl",
     category: "Streaming economics",
     title: "The quiet film paradox",
     shortTitle: "Quiet film paradox",
@@ -59,6 +63,8 @@ export const mockOpportunities: MockOpportunity[] = [
   },
   {
     id: "practical-effects-renaissance",
+    tmdbMovieId: 872585,
+    tmdbTitle: "Oppenheimer",
     category: "Craft & production",
     title: "Practical effects renaissance",
     shortTitle: "Practical effects",
@@ -78,6 +84,8 @@ export const mockOpportunities: MockOpportunity[] = [
   },
   {
     id: "female-debut-directors",
+    tmdbMovieId: 666277,
+    tmdbTitle: "Past Lives",
     category: "Industry shift",
     title: "Female debut directors at box office",
     shortTitle: "Debut directors",

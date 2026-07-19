@@ -1,39 +1,63 @@
 import { HomePage } from "@/components/home-page";
 import type { HomeMovieEnrichment } from "@/components/home-page";
-import { searchMovie } from "@/lib/tmdb";
+import { mockOpportunities } from "@/lib/mock-opportunities";
+import type { MockOpportunity } from "@/lib/mock-opportunities";
+import { getMovieDetails, searchMovie } from "@/lib/tmdb";
+import type { TMDbMovieDetails, TMDbMovieSummary } from "@/lib/tmdb";
 
 export const dynamic = "force-dynamic";
 
-const HOME_MOVIE_QUERIES: Record<string, string> = {
-  "sequel-anxiety": "Mission: Impossible - The Final Reckoning",
-  "quiet-film-paradox": "The Quiet Girl",
-  "practical-effects-renaissance": "Oppenheimer",
-  "female-debut-directors": "Past Lives",
-};
+type TMDbMovieMetadata = Pick<
+  TMDbMovieDetails | TMDbMovieSummary,
+  "overview" | "poster_path" | "release_date" | "title"
+>;
+
+function toHomeMovieEnrichment(movie: TMDbMovieMetadata): HomeMovieEnrichment {
+  return {
+    title: movie.title,
+    posterUrl: movie.poster_path
+      ? `https://image.tmdb.org/t/p/w780${movie.poster_path}`
+      : null,
+    releaseDate: movie.release_date,
+    overview: movie.overview,
+  };
+}
+
+async function resolveRelatedMovie(
+  opportunity: MockOpportunity,
+): Promise<HomeMovieEnrichment | null> {
+  if (opportunity.tmdbMovieId) {
+    try {
+      const movie = await getMovieDetails(opportunity.tmdbMovieId);
+      return toHomeMovieEnrichment(movie);
+    } catch {
+      // Fall through to the explicit title only when the stable ID fails.
+    }
+  }
+
+  if (opportunity.tmdbTitle) {
+    try {
+      const response = await searchMovie(opportunity.tmdbTitle);
+      return toHomeMovieEnrichment(response.results[0]);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
 
 async function getHomeMovieEnrichment(): Promise<Record<string, HomeMovieEnrichment>> {
   if (!process.env.TMDB_BEARER_TOKEN) return {};
 
-  const entries = await Promise.all(
-    Object.entries(HOME_MOVIE_QUERIES).map(async ([opportunityId, query]) => {
-      try {
-        const response = await searchMovie(query);
-        const movie = response.results[0];
+  const associatedOpportunities = mockOpportunities.filter(
+    (opportunity) => opportunity.tmdbMovieId || opportunity.tmdbTitle,
+  );
 
-        return [
-          opportunityId,
-          {
-            title: movie.title,
-            posterUrl: movie.poster_path
-              ? `https://image.tmdb.org/t/p/w780${movie.poster_path}`
-              : null,
-            releaseDate: movie.release_date,
-            overview: movie.overview,
-          } satisfies HomeMovieEnrichment,
-        ] as const;
-      } catch {
-        return null;
-      }
+  const entries = await Promise.all(
+    associatedOpportunities.map(async (opportunity) => {
+      const movie = await resolveRelatedMovie(opportunity);
+      return movie ? ([opportunity.id, movie] as const) : null;
     }),
   );
 

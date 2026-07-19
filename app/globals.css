@@ -95,7 +95,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 290px; }
 .opportunity-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); }
 .opportunity-card { position: relative; min-width: 0; background: var(--white); transition: background .2s; }
 .card-image-wrap { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; background: #222; }
-.card-image-wrap > img { object-fit: cover; transition: transform .65s cubic-bezier(.2,.75,.25,1); }
+.card-image-wrap > img { object-fit: cover; object-position: center; transition: transform .65s cubic-bezier(.2,.75,.25,1); }
 .opportunity-card:hover .card-image-wrap > img { transform: scale(1.035); }
 .card-image-wrap::after { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.72), transparent 45%); content: ""; }
 .card-number { position: absolute; z-index: 2; top: 19px; left: 20px; color: white; font-family: "Courier New", monospace; font-size: 10px; }
