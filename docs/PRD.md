@@ -222,6 +222,7 @@ Film Opportunity Radar 是一个：
 
 - 标题
 - 来源
+- 原始来源链接
 - 发布时间
 - Opportunity Score
 - 内容创作建议

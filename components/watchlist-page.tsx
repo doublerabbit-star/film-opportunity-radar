@@ -28,7 +28,7 @@ export function WatchlistPage() {
                   <span>0{index + 1}</span>
                 </Link>
                 <div className="watchlist-copy">
-                  <div className="watchlist-meta"><span>{item.category}</span><strong>{item.score}</strong></div>
+                  <div className="watchlist-meta"><span>{item.category}</span><strong>{item.score.toFixed(1)}</strong></div>
                   <h2><Link href={`/opportunities/${item.id}`}>{item.title}</Link></h2>
                   <p>{item.description}</p>
                   <div className="watchlist-actions"><Link href={`/opportunities/${item.id}`}>Open briefing <ArrowUpRight size={15} /></Link><button onClick={() => toggle(item.id)}><BookmarkX size={16} />Remove</button></div>

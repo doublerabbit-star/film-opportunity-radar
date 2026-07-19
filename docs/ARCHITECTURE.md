@@ -400,7 +400,9 @@ film-opportunity-radar/
 ├── public/              # 静态资源
 ├── docs/                # 项目文档
 │   ├── PRD.md
-│   └── ARCHITECTURE.md
+│   ├── ARCHITECTURE.md
+│   ├── DATA_MODEL.md
+│   └── DESIGN.md
 │
 ├── README.md
 ├── AGENTS.md
@@ -481,6 +483,8 @@ film-opportunity-radar/
 - Opportunity
 
 保证整个项目使用一致的数据结构。
+
+字段级契约见 `docs/DATA_MODEL.md`。`lib/mock-opportunities.ts` 中的 mock 数据直接使用 `types/index.ts` 的共享 `Opportunity` 类型；后续实现必须继续扩展该类型，不得创建新的并行模型。
 
 ---
 
@@ -634,6 +638,8 @@ opportunities
 
 随着项目发展，可以再扩展新的数据表，而不是提前设计复杂数据库。
 
+RSS、Gemini 与 Supabase 之间的最小字段契约见 `docs/DATA_MODEL.md`。RSS 必须保留原始来源 URL 和 ISO 8601 发布时间；Gemini 只生成分析内容，不生成评分或排序。
+
 ---
 
 # 8. 开发规范
@@ -706,6 +712,8 @@ opportunities
 - README.md
 - docs/PRD.md
 - docs/ARCHITECTURE.md
+- docs/DATA_MODEL.md
+- docs/DESIGN.md
 - AGENTS.md（如果存在）
 
 ---

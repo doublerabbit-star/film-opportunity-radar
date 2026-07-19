@@ -14,22 +14,7 @@ import {
 import { useState } from "react";
 import { mockOpportunities } from "@/lib/mock-opportunities";
 import { useWatchlist } from "@/lib/use-watchlist";
-
-type Opportunity = {
-  slug: string;
-  number: string;
-  category: string;
-  title: string;
-  description: string;
-  score: string;
-  signal: "Peak" | "Rising" | "Emerging";
-  image: string;
-  imageAlt: string;
-  accent: string;
-  window: string;
-  trend: string;
-  angles: string[];
-};
+import type { Opportunity } from "@/types";
 
 export type HomeMovieEnrichment = {
   title: string;
@@ -46,23 +31,8 @@ const categoryAccents: Record<string, string> = {
   Exhibition: "#a76d00",
 };
 
-const opportunities: Opportunity[] = mockOpportunities
-  .filter((item) => item.id !== "sequel-anxiety")
-  .map((item, index) => ({
-    slug: item.id,
-    number: String(index + 2).padStart(2, "0"),
-    category: item.category,
-    title: item.title,
-    description: item.description,
-    score: item.score,
-    signal: item.signal,
-    image: item.image,
-    imageAlt: item.imageAlt,
-    accent: categoryAccents[item.category] ?? "#1e6f52",
-    window: item.window,
-    trend: item.trend,
-    angles: item.angles.slice(0, 2),
-  }));
+const leadOpportunity = mockOpportunities[0];
+const opportunities = mockOpportunities.filter((item) => item.id !== leadOpportunity.id);
 
 const signalCounts = mockOpportunities.reduce<Record<Opportunity["signal"], number>>(
   (counts, item) => ({ ...counts, [item.signal]: counts[item.signal] + 1 }),
@@ -157,20 +127,20 @@ function SaveButton({ id, title, light = false }: { id: string; title: string; l
   );
 }
 
-function LeadOpportunity({ movie }: { movie?: HomeMovieEnrichment }) {
+function LeadOpportunity({ opportunity, movie }: { opportunity: Opportunity; movie?: HomeMovieEnrichment }) {
   return (
     <section className="lead-wrap" aria-labelledby="lead-title">
       <SectionHeader label="Lead opportunity" count="01" />
       <article className="lead-card">
-        <Image className="lead-image" src="/images/lead-cinema.png" alt="A woman in a red coat outside a weathered cinema" fill priority sizes="(max-width: 800px) 100vw, 70vw" />
+        <Image className="lead-image" src={opportunity.image} alt={opportunity.imageAlt} fill priority sizes="(max-width: 800px) 100vw, 70vw" />
         <div className="lead-shade" />
-        <div className="lead-topline"><span>Cultural anxiety</span><SaveButton id="sequel-anxiety" title="The 2000s sequel anxiety" light /></div>
+        <div className="lead-topline"><span>{opportunity.category}</span><SaveButton id={opportunity.id} title={opportunity.title} light /></div>
         <div className="lead-copy">
           <p className="cover-number">01 / Lead signal</p>
           <h1 id="lead-title"><Link href="/opportunities/sequel-anxiety">The 2000s<br />sequel anxiety</Link></h1>
-          <p className="lead-dek">Studios are greenlighting 14 franchise continuations this quarter. Audiences are caught between nostalgia and exhaustion.</p>
+          <p className="lead-dek">{opportunity.description}</p>
         </div>
-        <div className="score-block"><span>Opportunity score</span><strong>9.2</strong><small><i className="dot peak" /> Peak</small></div>
+        <div className="score-block"><span>Opportunity score</span><strong>{opportunity.score.toFixed(1)}</strong><small><i className="dot peak" /> {opportunity.signal}</small></div>
       </article>
       <div className="lead-analysis">
         <div className="analysis-main">
@@ -196,21 +166,22 @@ function LeadOpportunity({ movie }: { movie?: HomeMovieEnrichment }) {
   );
 }
 
-function OpportunityCard({ item, movie }: { item: Opportunity; movie?: HomeMovieEnrichment }) {
+function OpportunityCard({ item, movie, number }: { item: Opportunity; movie?: HomeMovieEnrichment; number: string }) {
   const image = movie?.posterUrl || item.image;
   const imageAlt = movie?.posterUrl ? `${movie.title} poster` : item.imageAlt;
+  const accent = categoryAccents[item.category] ?? "#1e6f52";
 
   return (
-    <article className="opportunity-card" style={{ "--story-accent": item.accent } as React.CSSProperties}>
-      <Link className="card-image-wrap" href={`/opportunities/${item.slug}`}>
+    <article className="opportunity-card" style={{ "--story-accent": accent } as React.CSSProperties}>
+      <Link className="card-image-wrap" href={`/opportunities/${item.id}`}>
         <Image src={image} alt={imageAlt} fill sizes="(max-width: 800px) 100vw, 33vw" />
-        <div className="card-number">{item.number}</div>
-        <div className="card-score"><span>Score</span><strong>{item.score}</strong></div>
+        <div className="card-number">{number}</div>
+        <div className="card-score"><span>Score</span><strong>{item.score.toFixed(1)}</strong></div>
       </Link>
-      <div className="card-save"><SaveButton id={item.slug} title={item.title} light /></div>
+      <div className="card-save"><SaveButton id={item.id} title={item.title} light /></div>
       <div className="card-copy">
         <div className="card-meta"><span>{item.category}</span><span><i className="dot" />{item.signal}</span></div>
-        <h3><Link href={`/opportunities/${item.slug}`}>{item.title}</Link></h3>
+        <h3><Link href={`/opportunities/${item.id}`}>{item.title}</Link></h3>
         <p className="card-dek">{item.description}</p>
         {movie && (
           <div className="card-film-reference">
@@ -222,9 +193,9 @@ function OpportunityCard({ item, movie }: { item: Opportunity; movie?: HomeMovie
         )}
         <div className="card-angles">
           <span className="eyebrow">Editorial openings</span>
-          {item.angles.map((angle) => <p key={angle}>↳ {angle}</p>)}
+          {item.contentAngles.slice(0, 2).map((angle) => <p key={angle}>↳ {angle}</p>)}
         </div>
-        <div className="card-footer"><span>{item.window}</span><strong>{item.trend}</strong></div>
+        <div className="card-footer"><span>{item.opportunityWindow}</span><strong>{item.trend}</strong></div>
       </div>
     </article>
   );
@@ -268,10 +239,10 @@ export function HomePage({ tmdbMovies = {} }: { tmdbMovies?: Record<string, Home
     <EditorialShell>
       <main>
         <div className="main-column">
-          <LeadOpportunity movie={tmdbMovies["sequel-anxiety"]} />
+          <LeadOpportunity opportunity={leadOpportunity} movie={tmdbMovies[leadOpportunity.id]} />
           <section id="signals" className="signals-section">
             <SectionHeader label="Today's signals" count={String(opportunities.length).padStart(2, "0")} />
-            <div className="opportunity-grid">{opportunities.map((item) => <OpportunityCard item={item} movie={tmdbMovies[item.slug]} key={item.title} />)}</div>
+            <div className="opportunity-grid">{opportunities.map((item, index) => <OpportunityCard item={item} movie={tmdbMovies[item.id]} number={String(index + 2).padStart(2, "0")} key={item.id} />)}</div>
           </section>
         </div>
         <NewsRail />

@@ -89,13 +89,17 @@ The most important reusable component is the Opportunity Card.
 Each card should contain:
 
 - Poster
-- Event Type
+- Category
 - Title
 - Short Description
-- Opportunity Level
-- Source
-- Published Time
+- Opportunity Score
+- Signal Status
+- Editorial Angles
+- Opportunity Window
+- Trend
 - Bookmark Button
+
+Source attribution and published time are shown on the Opportunity Detail page, where the original source link is also available.
 
 Other reusable components:
 

@@ -1,9 +1,9 @@
 import { HomePage } from "@/components/home-page";
 import type { HomeMovieEnrichment } from "@/components/home-page";
 import { mockOpportunities } from "@/lib/mock-opportunities";
-import type { MockOpportunity } from "@/lib/mock-opportunities";
 import { getMovieDetails, searchMovie } from "@/lib/tmdb";
 import type { TMDbMovieDetails, TMDbMovieSummary } from "@/lib/tmdb";
+import type { Opportunity } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ function toHomeMovieEnrichment(movie: TMDbMovieMetadata): HomeMovieEnrichment {
 }
 
 async function resolveRelatedMovie(
-  opportunity: MockOpportunity,
+  opportunity: Opportunity,
 ): Promise<HomeMovieEnrichment | null> {
   if (opportunity.tmdbMovieId) {
     try {

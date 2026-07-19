@@ -17,6 +17,8 @@ Before implementing any feature, read the following documents in order:
 1. README.md
 2. docs/PRD.md
 3. docs/ARCHITECTURE.md
+4. docs/DATA_MODEL.md
+5. docs/DESIGN.md
 
 These documents define the product scope and technical architecture.
 
