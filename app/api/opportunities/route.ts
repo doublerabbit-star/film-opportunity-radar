@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   generateOpportunities,
-  getGeminiModel,
-  isGeminiConfigured,
+  getDeepSeekModel,
+  isDeepSeekConfigured,
 } from "@/lib/opportunities";
 import { OPPORTUNITIES_ROUTE_TIMEOUT_MS } from "@/lib/opportunities/config";
 import { logOpportunityTiming } from "@/lib/opportunities/dev-timing";
@@ -52,14 +52,14 @@ export async function GET() {
   const requestStartedAt = performance.now();
   logOpportunityTiming("route:start", requestStartedAt);
 
-  if (!isGeminiConfigured()) {
+  if (!isDeepSeekConfigured()) {
     return NextResponse.json(
       {
         count: 0,
         opportunities: [],
         processing: emptyProcessing(),
-        model: getGeminiModel(),
-        error: "GEMINI_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY is not configured on the server.",
+        model: getDeepSeekModel(),
+        error: "DEEPSEEK_API_KEY is not configured on the server.",
         generatedAt: new Date().toISOString(),
       },
       { status: 503, headers: NO_STORE_HEADERS },
@@ -110,8 +110,8 @@ export async function GET() {
           failedCount: generated.failedCount,
           prefilteredCount: generated.prefilteredCount,
         },
-        model: getGeminiModel(),
-        ...(allCandidatesFailed ? { error: "All Gemini analysis requests failed." } : {}),
+        model: getDeepSeekModel(),
+        ...(allCandidatesFailed ? { error: "All DeepSeek analysis requests failed." } : {}),
         ...(generated.failures.length ? { failures: generated.failures } : {}),
         generatedAt: new Date().toISOString(),
       },
@@ -131,7 +131,7 @@ export async function GET() {
         count: 0,
         opportunities: [],
         processing: emptyProcessing(),
-        model: getGeminiModel(),
+        model: getDeepSeekModel(),
         error: timedOut
           ? "Opportunity generation timed out."
           : "Opportunity generation failed.",

@@ -1,7 +1,9 @@
-# MVP Gemini Opportunity Analysis
+# Archived Gemini Opportunity Analysis
 
-> Status: Implemented  
+> Status: Inactive provider reference
 > Last Updated: 2026-07
+
+The Gemini implementation remains in the repository for reference, but the runtime pipeline now uses DeepSeek. See `docs/DEEPSEEK.md` for active configuration and behavior.
 
 ## Scope
 

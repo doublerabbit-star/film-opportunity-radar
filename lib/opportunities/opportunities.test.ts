@@ -2,13 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { FilmEvent } from "../../types/index.ts";
 import {
-  GEMINI_RESPONSE_JSON_SCHEMA,
-  GeminiOutputError,
-  parseGeminiAnalysis,
-  type GeminiAnalysis,
+  AnalysisOutputError,
+  parseAnalysis,
+  type Analysis,
 } from "./analysis-schema.ts";
+import { analyzeEventWithDeepSeek, buildDeepSeekRequestBody } from "./deepseek.ts";
 import { generateOpportunities } from "./generate-opportunities.ts";
-import { buildGeminiRequestBody } from "./gemini.ts";
 import { selectCandidateEvents } from "./prefilter-events.ts";
 import { calculateOpportunityScore, deriveSignal } from "./score-opportunity.ts";
 
@@ -66,35 +65,60 @@ test("derives signals from explicit thresholds", () => {
   assert.equal(deriveSignal(6.9), "Emerging");
 });
 
-test("validates an accepted Gemini result", () => {
-  const result = parseGeminiAnalysis(acceptedJson);
+test("validates an accepted analysis result", () => {
+  const result = parseAnalysis(acceptedJson);
   assert.equal(result.isOpportunity, true);
   if (result.isOpportunity) assert.equal(result.editorialWeight, "high");
 });
 
-test("builds a Gemini 3.5 compatible structured-output request", () => {
-  const request = buildGeminiRequestBody(filmEvent());
+test("builds a DeepSeek JSON Output request", () => {
+  const request = buildDeepSeekRequestBody(filmEvent());
 
-  assert.equal(request.generationConfig.responseMimeType, "application/json");
-  assert.deepEqual(request.generationConfig.responseSchema, GEMINI_RESPONSE_JSON_SCHEMA);
-  assert.equal("responseFormat" in request.generationConfig, false);
-  assert.equal("temperature" in request.generationConfig, false);
-  assert.equal(request.contents.length, 1);
+  assert.equal(request.model, "deepseek-v4-flash");
+  assert.deepEqual(request.response_format, { type: "json_object" });
+  assert.deepEqual(request.thinking, { type: "disabled" });
+  assert.equal(request.max_tokens, 1_500);
+  assert.equal(request.stream, false);
+  assert.equal(request.messages.length, 1);
+  assert.match(request.messages[0].content, /return JSON/i);
 });
 
-test("validates a rejected Gemini result", () => {
+test("validates a rejected analysis result", () => {
   assert.deepEqual(
-    parseGeminiAnalysis(JSON.stringify({ isOpportunity: false, reason: "No meaningful creator angle." })),
+    parseAnalysis(JSON.stringify({ isOpportunity: false, reason: "No meaningful creator angle." })),
     { isOpportunity: false, reason: "No meaningful creator angle." },
   );
 });
 
-test("rejects malformed or unexpected Gemini output", () => {
-  assert.throws(() => parseGeminiAnalysis("not json"), GeminiOutputError);
+test("rejects malformed or unexpected provider output", () => {
+  assert.throws(() => parseAnalysis("not json"), AnalysisOutputError);
   assert.throws(
-    () => parseGeminiAnalysis(JSON.stringify({ ...JSON.parse(acceptedJson), score: 9.9 })),
-    GeminiOutputError,
+    () => parseAnalysis(JSON.stringify({ ...JSON.parse(acceptedJson), score: 9.9 })),
+    AnalysisOutputError,
   );
+});
+
+test("calls DeepSeek with server-side Bearer authentication and parses JSON", async () => {
+  const previousKey = process.env.DEEPSEEK_API_KEY;
+  process.env.DEEPSEEK_API_KEY = "test-deepseek-key";
+
+  try {
+    const analysis = await analyzeEventWithDeepSeek(filmEvent(), async (input, init) => {
+      assert.equal(input, "https://api.deepseek.com/chat/completions");
+      assert.equal(new Headers(init?.headers).get("Authorization"), "Bearer test-deepseek-key");
+      return new Response(JSON.stringify({
+        choices: [{
+          finish_reason: "stop",
+          message: { content: acceptedJson },
+        }],
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+
+    assert.equal(analysis.isOpportunity, true);
+  } finally {
+    if (previousKey === undefined) delete process.env.DEEPSEEK_API_KEY;
+    else process.env.DEEPSEEK_API_KEY = previousKey;
+  }
 });
 
 test("isolates rejected and failed analyses while constructing valid opportunities", async () => {
@@ -103,10 +127,10 @@ test("isolates rejected and failed analyses while constructing valid opportuniti
     filmEvent({ id: "evt_rejected", title: "Film Festival Publishes Routine Timetable", sourceUrl: "https://example.com/rejected" }),
     filmEvent({ id: "evt_failed", title: "Director Announces Film Production", sourceUrl: "https://example.com/failed" }),
   ];
-  const analyzer = async (event: FilmEvent): Promise<GeminiAnalysis> => {
+  const analyzer = async (event: FilmEvent): Promise<Analysis> => {
     if (event.id === "evt_rejected") return { isOpportunity: false, reason: "Routine notice." };
-    if (event.id === "evt_failed") throw new GeminiOutputError("Malformed result.");
-    return parseGeminiAnalysis(acceptedJson);
+    if (event.id === "evt_failed") throw new AnalysisOutputError("Malformed result.");
+    return parseAnalysis(acceptedJson);
   };
 
   const result = await generateOpportunities(events, { analyzer, now: NOW });
@@ -117,5 +141,5 @@ test("isolates rejected and failed analyses while constructing valid opportuniti
   assert.equal(result.opportunities[0].id, "opp_primary");
   assert.equal(result.opportunities[0].eventId, "evt_primary");
   assert.equal(result.opportunities[0].editorialWeight, "high");
-  assert.equal(result.failures[0].error, "Gemini returned an invalid structured result.");
+  assert.equal(result.failures[0].error, "The analysis provider returned an invalid structured result.");
 });

@@ -7,7 +7,7 @@
 
 ## Purpose
 
-This document defines the smallest shared contract needed to implement the RSS to Gemini pipeline without introducing a second Opportunity model.
+This document defines the smallest shared contract needed to implement the RSS to AI-analysis pipeline without introducing a second Opportunity model.
 
 The pipeline order and module responsibilities are already defined in `ARCHITECTURE.md`. Before this audit, the field-level handoffs were not defined.
 
@@ -93,7 +93,7 @@ Rule Engine
   -> filters out irrelevant, duplicate, stale, or low-value events before any paid calls
 TMDb Metadata Service
   -> adds the explicit movie association and display image when available, for events that passed the Rule Engine
-Gemini AI Generator
+DeepSeek AI Generator
   -> creates title, shortTitle, description, whyItMatters, contentAngles, titleIdeas, and a qualitative editorialWeight
 Opportunity Engine
   -> determines category, score, signal, trend, volume, and opportunity window, using editorialWeight as one input among rule-based factors
@@ -101,7 +101,7 @@ Page / Persistence
   -> ranks by score, displays the result, and stores the event relationship
 ```
 
-Gemini must not calculate the final score, assign rank, or replace source attribution. It may output a qualitative `editorialWeight` (high / medium / low) as one input to the Opportunity Engine, but the Opportunity Engine — not Gemini — always determines the final `score` and `signal`. Generated output must be validated before it is stored or rendered.
+DeepSeek must not calculate the final score, assign rank, or replace source attribution. It may output a qualitative `editorialWeight` (high / medium / low) as one input to the Opportunity Engine, but the Opportunity Engine — not DeepSeek — always determines the final `score` and `signal`. Generated output must be validated before it is stored or rendered.
 
 ## Supabase Fit
 
@@ -109,7 +109,7 @@ The existing three-table plan remains sufficient:
 
 - `events` stores `FilmEvent`, including the original source URL and publication time.
 - `movies` stores reusable TMDb metadata.
-- `opportunities` stores the event foreign key, score fields, and Gemini-generated analysis.
+- `opportunities` stores the event foreign key, score fields, and AI-generated analysis.
 
 Arrays such as `contentAngles` and `titleIdeas` can use PostgreSQL `jsonb` for the MVP. Database-managed primary keys and timestamps do not need additional application-model fields yet.
 

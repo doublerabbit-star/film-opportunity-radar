@@ -24,10 +24,12 @@ export const geminiAnalysisSchema = z.discriminatedUnion("isOpportunity", [
   rejectedAnalysisSchema,
 ]);
 
-export type AcceptedGeminiAnalysis = z.infer<typeof acceptedAnalysisSchema>;
-export type GeminiAnalysis = z.infer<typeof geminiAnalysisSchema>;
+export type AcceptedAnalysis = z.infer<typeof acceptedAnalysisSchema>;
+export type Analysis = z.infer<typeof geminiAnalysisSchema>;
+export type AcceptedGeminiAnalysis = AcceptedAnalysis;
+export type GeminiAnalysis = Analysis;
 
-export const GEMINI_RESPONSE_JSON_SCHEMA = {
+export const ANALYSIS_RESPONSE_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
@@ -54,28 +56,33 @@ export const GEMINI_RESPONSE_JSON_SCHEMA = {
   required: ["isOpportunity"],
 } as const;
 
-export class GeminiOutputError extends Error {
-  readonly publicMessage = "Gemini returned an invalid structured result.";
+export const GEMINI_RESPONSE_JSON_SCHEMA = ANALYSIS_RESPONSE_JSON_SCHEMA;
+
+export class AnalysisOutputError extends Error {
+  readonly publicMessage = "The analysis provider returned an invalid structured result.";
 
   constructor(message: string, options: { cause?: unknown } = {}) {
     super(message, options);
-    this.name = "GeminiOutputError";
+    this.name = "AnalysisOutputError";
   }
 }
 
-export function parseGeminiAnalysis(rawText: string): GeminiAnalysis {
+export function parseAnalysis(rawText: string): Analysis {
   let parsed: unknown;
 
   try {
     parsed = JSON.parse(rawText);
   } catch (error) {
-    throw new GeminiOutputError("Gemini returned malformed JSON.", { cause: error });
+    throw new AnalysisOutputError("The analysis provider returned malformed JSON.", { cause: error });
   }
 
   const result = geminiAnalysisSchema.safeParse(parsed);
   if (!result.success) {
-    throw new GeminiOutputError("Gemini output failed schema validation.");
+    throw new AnalysisOutputError("The analysis provider output failed schema validation.");
   }
 
   return result.data;
 }
+
+export { AnalysisOutputError as GeminiOutputError };
+export const parseGeminiAnalysis = parseAnalysis;

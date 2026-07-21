@@ -42,7 +42,7 @@ export function sanitizeNetworkError(error: unknown): SanitizedNetworkError {
 }
 
 export function logSanitizedNetworkError(
-  upstream: "gemini" | "rss",
+  upstream: "deepseek" | "gemini" | "rss",
   targetHost: string,
   error: unknown,
 ): void {
@@ -53,4 +53,3 @@ export function logSanitizedNetworkError(
     JSON.stringify({ targetHost, ...sanitizeNetworkError(error) }),
   );
 }
-

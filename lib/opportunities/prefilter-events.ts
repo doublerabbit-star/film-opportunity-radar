@@ -2,7 +2,7 @@ import type { FilmEvent } from "../../types/index";
 import { normalizeTitle } from "../rss/normalize-event.ts";
 import {
   MAX_EVENT_AGE_HOURS,
-  MAX_GEMINI_CANDIDATES,
+  MAX_ANALYSIS_CANDIDATES,
   MIN_EVENT_TEXT_LENGTH,
 } from "./config.ts";
 
@@ -61,7 +61,7 @@ export function selectCandidateEvents(
   options: { now?: Date; limit?: number } = {},
 ): PrefilterResult {
   const now = options.now ?? new Date();
-  const limit = options.limit ?? MAX_GEMINI_CANDIDATES;
+  const limit = options.limit ?? MAX_ANALYSIS_CANDIDATES;
   const candidates: FilmEvent[] = [];
   const rejected: PrefilterRejection[] = [];
   const seenUrls = new Set<string>();

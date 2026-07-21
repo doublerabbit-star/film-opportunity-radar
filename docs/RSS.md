@@ -7,7 +7,7 @@
 
 The RSS collector fetches verified publication feeds, parses RSS or Atom, normalizes entries into the shared `FilmEvent` contract, deduplicates them, and exposes a temporary read-only endpoint.
 
-It does not filter editorial relevance, enrich TMDb metadata, generate Opportunities, call Gemini, persist data, or schedule collection.
+It does not filter editorial relevance, enrich TMDb metadata, generate Opportunities, call DeepSeek, persist data, or schedule collection.
 
 ## Verified Sources
 

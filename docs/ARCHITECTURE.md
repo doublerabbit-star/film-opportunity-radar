@@ -107,7 +107,7 @@ AI 不负责：
 | 组件库 | shadcn/ui | 与 Tailwind 配合良好，易于定制 |
 | 后端 | Next.js Route Handlers | 无需额外搭建独立后端 |
 | 数据库 | Supabase（PostgreSQL） | 免费额度充足，部署简单 |
-| AI | Gemini Flash | 响应速度快，成本较低 |
+| AI | DeepSeek V4 Flash | 响应速度快，成本较低 |
 | 电影数据 | TMDb API | 提供电影元数据 |
 | 部署 | Vercel | 与 Next.js 集成简单 |
 | 版本管理 | Git + GitHub | 标准开发流程 |
@@ -143,7 +143,7 @@ AI 不负责：
 
 ---
 
-### Gemini Flash
+### DeepSeek V4 Flash
 
 AI 在本项目中只承担内容生成任务。
 
@@ -153,7 +153,7 @@ AI 在本项目中只承担内容生成任务。
 - 调用成本
 - 稳定性
 
-因此选择 Gemini Flash。
+因此选择 DeepSeek V4 Flash。
 
 如果未来需要更高质量生成，可以替换模型，而无需修改整体架构。
 
@@ -284,7 +284,7 @@ Opportunity Engine
 
 AI 只负责内容生成和提供参考性的定性判断，不计算最终分数，不决定排序。
 
-MVP Gemini 实现位于 `lib/opportunities/`，临时只读验证端点为 `GET /api/opportunities`；Prompt、预过滤、结构化验证和评分规则见 `docs/GEMINI.md`。
+MVP DeepSeek 实现位于 `lib/opportunities/`，临时只读验证端点为 `GET /api/opportunities`；Prompt、预过滤、结构化验证和评分规则见 `docs/DEEPSEEK.md`。原 Gemini 实现保留在仓库中，但不再由运行时调用。
 
 ---
 
@@ -446,6 +446,7 @@ film-opportunity-radar/
 │   ├── DATA_MODEL.md
 │   ├── DESIGN.md
 │   ├── RSS.md
+│   ├── DEEPSEEK.md
 │   └── GEMINI.md
 │
 ├── README.md
@@ -495,7 +496,7 @@ film-opportunity-radar/
 
 - RSS
 - TMDb
-- Gemini
+- DeepSeek
 
 所有外部请求统一放在这里。
 
@@ -710,7 +711,7 @@ opportunities
 
 随着项目发展，可以再扩展新的数据表，而不是提前设计复杂数据库。
 
-RSS、Gemini 与 Supabase 之间的最小字段契约见 `docs/DATA_MODEL.md`。RSS 必须保留原始来源 URL 和 ISO 8601 发布时间；Gemini 只生成分析内容，不生成评分或排序。
+RSS、DeepSeek 与 Supabase 之间的最小字段契约见 `docs/DATA_MODEL.md`。RSS 必须保留原始来源 URL 和 ISO 8601 发布时间；DeepSeek 只生成分析内容，不生成评分或排序。
 
 ---
 
@@ -787,6 +788,7 @@ RSS、Gemini 与 Supabase 之间的最小字段契约见 `docs/DATA_MODEL.md`。
 - docs/DATA_MODEL.md
 - docs/DESIGN.md
 - docs/RSS.md
+- docs/DEEPSEEK.md
 - docs/GEMINI.md
 - AGENTS.md（如果存在）
 

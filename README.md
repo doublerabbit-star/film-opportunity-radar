@@ -46,7 +46,7 @@ The current version is designed for personal use and small-scale testing.
 | UI | React + Tailwind CSS + shadcn/ui |
 | Backend | Next.js Route Handlers |
 | Database | Supabase (PostgreSQL) |
-| AI | Gemini Flash |
+| AI | DeepSeek V4 Flash |
 | Movie Metadata | TMDb API |
 | Deployment | Vercel |
 
@@ -68,6 +68,7 @@ film-opportunity-radar/
 │   ├── DATA_MODEL.md
 │   ├── DESIGN.md
 │   ├── RSS.md
+│   ├── DEEPSEEK.md
 │   └── GEMINI.md
 │
 ├── README.md
@@ -85,7 +86,8 @@ film-opportunity-radar/
 | docs/DATA_MODEL.md | MVP data and pipeline contract |
 | docs/DESIGN.md | Product design direction |
 | docs/RSS.md | RSS sources, normalization, and endpoint behavior |
-| docs/GEMINI.md | Gemini analysis, filtering, and scoring behavior |
+| docs/DEEPSEEK.md | Active DeepSeek analysis provider and pipeline behavior |
+| docs/GEMINI.md | Retained inactive Gemini provider reference |
 | AGENTS.md | AI development guidelines |
 
 Please read these documents before implementing new features.

@@ -1,5 +1,5 @@
 import type { FilmEvent, Opportunity } from "../../types/index";
-import type { AcceptedGeminiAnalysis } from "./analysis-schema.ts";
+import type { AcceptedAnalysis } from "./analysis-schema.ts";
 import { calculateOpportunityScore, deriveSignal } from "./score-opportunity.ts";
 
 const FALLBACK_IMAGE = "/images/lead-cinema.png";
@@ -28,7 +28,7 @@ function opportunityId(eventId: string): string {
 
 export function buildOpportunity(
   event: FilmEvent,
-  analysis: AcceptedGeminiAnalysis,
+  analysis: AcceptedAnalysis,
   now = new Date(),
 ): Opportunity {
   const score = calculateOpportunityScore(event, analysis.editorialWeight, now);
