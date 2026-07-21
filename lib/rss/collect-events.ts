@@ -18,7 +18,7 @@ export type CollectEventsResult = {
   sources: RssSourceStatus[];
 };
 
-export type FeedFetcher = (source: RssSource) => Promise<string>;
+export type FeedFetcher = (source: RssSource, signal?: AbortSignal) => Promise<string>;
 
 function clientSafeError(error: unknown): string {
   if (error instanceof FeedFetchError || error instanceof FeedParseError) {
@@ -31,12 +31,13 @@ function clientSafeError(error: unknown): string {
 export async function collectEvents(
   sources: readonly RssSource[] = RSS_SOURCES,
   fetcher: FeedFetcher = fetchFeedXml,
+  signal?: AbortSignal,
 ): Promise<CollectEventsResult> {
   const enabledSources = sources.filter((source) => source.enabled);
 
   const results = await Promise.all(enabledSources.map(async (source) => {
     try {
-      const xml = await fetcher(source);
+      const xml = await fetcher(source, signal);
       const feed = parseFeedXml(xml);
       const events = feed.items
         .map((item) => normalizeFeedItem(source, item))

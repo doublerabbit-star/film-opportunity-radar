@@ -1,4 +1,5 @@
 import type { RssSource } from "./sources.ts";
+import { logSanitizedNetworkError } from "../sanitized-network-error.ts";
 
 const REQUEST_TIMEOUT_MS = 8_000;
 const MAX_FEED_SIZE_BYTES = 5_000_000;
@@ -13,8 +14,12 @@ export class FeedFetchError extends Error {
   }
 }
 
-export async function fetchFeedXml(source: RssSource): Promise<string> {
+export async function fetchFeedXml(source: RssSource, parentSignal?: AbortSignal): Promise<string> {
   let response: Response;
+  const timeoutSignal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  const signal = parentSignal
+    ? AbortSignal.any([timeoutSignal, parentSignal])
+    : timeoutSignal;
 
   try {
     response = await fetch(source.feedUrl, {
@@ -24,9 +29,10 @@ export async function fetchFeedXml(source: RssSource): Promise<string> {
       },
       cache: "no-store",
       redirect: "follow",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal,
     });
   } catch (error) {
+    logSanitizedNetworkError("rss", new URL(source.feedUrl).hostname, error);
     const timedOut = error instanceof Error && (
       error.name === "TimeoutError" || error.name === "AbortError"
     );

@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/rss/rss.test.ts lib/opportunities/opportunities.test.ts"
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test lib/rss/rss.test.ts lib/opportunities/opportunities.test.ts lib/sanitized-network-error.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",

@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { FilmEvent } from "../../types/index.ts";
 import {
+  GEMINI_RESPONSE_JSON_SCHEMA,
   GeminiOutputError,
   parseGeminiAnalysis,
   type GeminiAnalysis,
 } from "./analysis-schema.ts";
 import { generateOpportunities } from "./generate-opportunities.ts";
+import { buildGeminiRequestBody } from "./gemini.ts";
 import { selectCandidateEvents } from "./prefilter-events.ts";
 import { calculateOpportunityScore, deriveSignal } from "./score-opportunity.ts";
 
@@ -68,6 +70,16 @@ test("validates an accepted Gemini result", () => {
   const result = parseGeminiAnalysis(acceptedJson);
   assert.equal(result.isOpportunity, true);
   if (result.isOpportunity) assert.equal(result.editorialWeight, "high");
+});
+
+test("builds a Gemini 3.5 compatible structured-output request", () => {
+  const request = buildGeminiRequestBody(filmEvent());
+
+  assert.equal(request.generationConfig.responseMimeType, "application/json");
+  assert.deepEqual(request.generationConfig.responseSchema, GEMINI_RESPONSE_JSON_SCHEMA);
+  assert.equal("responseFormat" in request.generationConfig, false);
+  assert.equal("temperature" in request.generationConfig, false);
+  assert.equal(request.contents.length, 1);
 });
 
 test("validates a rejected Gemini result", () => {

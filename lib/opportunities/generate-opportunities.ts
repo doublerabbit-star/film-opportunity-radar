@@ -2,9 +2,10 @@ import type { FilmEvent, Opportunity } from "../../types/index";
 import { GeminiOutputError, type GeminiAnalysis } from "./analysis-schema.ts";
 import { buildOpportunity } from "./build-opportunity.ts";
 import { GeminiRequestError, analyzeEventWithGemini } from "./gemini.ts";
+import { logOpportunityTiming } from "./dev-timing.ts";
 import { selectCandidateEvents } from "./prefilter-events.ts";
 
-export type EventAnalyzer = (event: FilmEvent) => Promise<GeminiAnalysis>;
+export type EventAnalyzer = (event: FilmEvent, signal?: AbortSignal) => Promise<GeminiAnalysis>;
 
 export type OpportunityFailure = {
   eventId: string;
@@ -31,15 +32,22 @@ function clientSafeFailure(error: unknown): string {
 
 export async function generateOpportunities(
   events: readonly FilmEvent[],
-  options: { analyzer?: EventAnalyzer; now?: Date; limit?: number } = {},
+  options: { analyzer?: EventAnalyzer; now?: Date; limit?: number; signal?: AbortSignal } = {},
 ): Promise<OpportunityGenerationResult> {
-  const analyzer = options.analyzer ?? analyzeEventWithGemini;
+  const analyzer: EventAnalyzer = options.analyzer
+    ?? ((event, signal) => analyzeEventWithGemini(event, fetch, signal));
   const now = options.now ?? new Date();
+  const prefilterStartedAt = performance.now();
   const prefilter = selectCandidateEvents(events, { now, limit: options.limit });
+  logOpportunityTiming("candidate-filter:complete", prefilterStartedAt, {
+    input: events.length,
+    candidates: prefilter.candidates.length,
+    rejected: prefilter.rejected.length,
+  });
 
   const results = await Promise.all(prefilter.candidates.map(async (event) => {
     try {
-      const analysis = await analyzer(event);
+      const analysis = await analyzer(event, options.signal);
       return analysis.isOpportunity
         ? { status: "accepted" as const, opportunity: buildOpportunity(event, analysis, now) }
         : { status: "rejected" as const };
