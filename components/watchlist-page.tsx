@@ -3,13 +3,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, BookmarkX } from "lucide-react";
+import { useEffect, useState } from "react";
 import { EditorialShell } from "@/components/home-page";
 import { mockOpportunities } from "@/lib/mock-opportunities";
+import { readCachedOpportunities } from "@/lib/opportunity-cache";
 import { useWatchlist } from "@/lib/use-watchlist";
+import type { Opportunity } from "@/types";
 
 export function WatchlistPage() {
   const { items, toggle } = useWatchlist();
-  const saved = mockOpportunities.filter((item) => items.includes(item.id));
+  const [liveOpportunities, setLiveOpportunities] = useState<Opportunity[]>([]);
+
+  useEffect(() => {
+    setLiveOpportunities(readCachedOpportunities());
+  }, []);
+
+  const available = [...liveOpportunities, ...mockOpportunities].filter(
+    (item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index,
+  );
+  const saved = available.filter((item) => items.includes(item.id));
 
   return (
     <EditorialShell active="Saved">

@@ -7,10 +7,13 @@ const DEFAULT_ITEMS = ["sequel-anxiety", "practical-effects-renaissance"];
 
 function readItems() {
   if (typeof window === "undefined") return DEFAULT_ITEMS;
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (!stored) return DEFAULT_ITEMS;
   try {
-    return JSON.parse(stored) as string[];
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (!stored) return DEFAULT_ITEMS;
+    const parsed: unknown = JSON.parse(stored);
+    return Array.isArray(parsed) && parsed.every((item) => typeof item === "string")
+      ? parsed
+      : DEFAULT_ITEMS;
   } catch {
     return DEFAULT_ITEMS;
   }
@@ -26,7 +29,11 @@ export function useWatchlist() {
   const toggle = useCallback((id: string) => {
     const current = readItems();
     const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Keep the current session interactive when persistent storage is unavailable.
+    }
     setItems(next);
     queueMicrotask(() => window.dispatchEvent(new Event("film-watchlist-change")));
   }, []);

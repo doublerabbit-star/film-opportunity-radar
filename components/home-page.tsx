@@ -11,17 +11,11 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { useState } from "react";
-import { mockOpportunities } from "@/lib/mock-opportunities";
+import { useEffect, useState } from "react";
+import { cacheOpportunities } from "@/lib/opportunity-cache";
+import { fetchOpportunities } from "@/lib/opportunities-client";
 import { useWatchlist } from "@/lib/use-watchlist";
 import type { Opportunity } from "@/types";
-
-export type HomeMovieEnrichment = {
-  title: string;
-  posterUrl: string | null;
-  releaseDate: string;
-  overview: string;
-};
 
 const categoryAccents: Record<string, string> = {
   "Cultural anxiety": "#7b2942",
@@ -31,29 +25,37 @@ const categoryAccents: Record<string, string> = {
   Exhibition: "#a76d00",
 };
 
-const leadOpportunity = mockOpportunities[0];
-const opportunities = mockOpportunities.filter((item) => item.id !== leadOpportunity.id);
-
-const signalCounts = mockOpportunities.reduce<Record<Opportunity["signal"], number>>(
-  (counts, item) => ({ ...counts, [item.signal]: counts[item.signal] + 1 }),
-  { Peak: 0, Rising: 0, Emerging: 0 },
-);
-
-const news = [
-  ["04:12", "Shrek 5 projections revised upward by $80M"],
-  ["05:44", "Dune: Messiah BTS footage surpasses 52M views"],
-  ["06:00", "Q2 theatrical attendance report published"],
-  ["07:15", "Three female debut directors enter global top 10"],
-  ["08:30", "A24 announces slate expansion to 14 titles in 2027"],
-];
-
-const nav = [
-  ["Today", "/", String(mockOpportunities.length)],
-  ["Trending", "/#signals", "12"],
-  ["Archive", "/#signals", ""],
-  ["Saved", "/watchlist", "3"],
-];
 const categories = ["Cultural Anxiety", "Streaming Economics", "Craft & Production", "Industry Shift", "Exhibition"];
+
+type HomePageState = {
+  status: "loading" | "success" | "error";
+  opportunities: Opportunity[];
+  generatedAt: string | null;
+  error: string | null;
+};
+
+function formatBriefingDate(value: string | null) {
+  if (!value) return "Today";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Today";
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatUtcTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--:--";
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "UTC",
+  }).format(date);
+}
 
 function Wordmark() {
   return (
@@ -65,7 +67,20 @@ function Wordmark() {
   );
 }
 
-function Sidebar({ open, onClose, active = "Today" }: { open: boolean; onClose: () => void; active?: string }) {
+function Sidebar({ open, onClose, opportunities, active = "Today" }: { open: boolean; onClose: () => void; opportunities: Opportunity[]; active?: string }) {
+  const { items } = useWatchlist();
+  const trendingCount = opportunities.filter((item) => item.signal !== "Emerging").length;
+  const nav = [
+    ["Today", "/", String(opportunities.length)],
+    ["Trending", "/#signals", String(trendingCount)],
+    ["Archive", "/#signals", ""],
+    ["Saved", "/watchlist", String(items.length)],
+  ];
+  const signalCounts = opportunities.reduce<Record<Opportunity["signal"], number>>(
+    (counts, item) => ({ ...counts, [item.signal]: counts[item.signal] + 1 }),
+    { Peak: 0, Rising: 0, Emerging: 0 },
+  );
+
   return (
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
       <div className="sidebar-top">
@@ -94,14 +109,14 @@ function Sidebar({ open, onClose, active = "Today" }: { open: boolean; onClose: 
   );
 }
 
-function Masthead({ onMenu, onFilter }: { onMenu: () => void; onFilter: () => void }) {
+function Masthead({ onMenu, onFilter, generatedAt, count }: { onMenu: () => void; onFilter: () => void; generatedAt: string | null; count: number }) {
   return (
     <header className="masthead" id="top">
       <button className="icon-button mobile-menu" onClick={onMenu} aria-label="Open navigation"><Menu size={20} /></button>
-      <div className="briefing"><span className="eyebrow">Morning briefing</span><strong>Sunday, July 19, 2026</strong></div>
-      <div className="live"><i className="dot rising" /> Live <span>Updated 06:00 GMT</span></div>
+      <div className="briefing"><span className="eyebrow">Morning briefing</span><strong>{formatBriefingDate(generatedAt)}</strong></div>
+      <div className="live"><i className="dot rising" /> Live <span>{generatedAt ? `Updated ${formatUtcTime(generatedAt)} GMT` : "Updating"}</span></div>
       <div className="masthead-actions">
-        <span className="discourse">Discourse <strong>↑ +18%</strong> today</span>
+        <span className="discourse">Signals <strong>{count}</strong> today</span>
         <button className="filter-button" onClick={onFilter}><SlidersHorizontal size={15} />Filter signals</button>
       </div>
     </header>
@@ -127,7 +142,7 @@ function SaveButton({ id, title, light = false }: { id: string; title: string; l
   );
 }
 
-function LeadOpportunity({ opportunity, movie }: { opportunity: Opportunity; movie?: HomeMovieEnrichment }) {
+function LeadOpportunity({ opportunity }: { opportunity: Opportunity }) {
   return (
     <section className="lead-wrap" aria-labelledby="lead-title">
       <SectionHeader label="Lead opportunity" count="01" />
@@ -137,7 +152,7 @@ function LeadOpportunity({ opportunity, movie }: { opportunity: Opportunity; mov
         <div className="lead-topline"><span>{opportunity.category}</span><SaveButton id={opportunity.id} title={opportunity.title} light /></div>
         <div className="lead-copy">
           <p className="cover-number">01 / Lead signal</p>
-          <h1 id="lead-title"><Link href="/opportunities/sequel-anxiety">The 2000s<br />sequel anxiety</Link></h1>
+          <h1 id="lead-title"><Link href={`/opportunities/${opportunity.id}`}>{opportunity.shortTitle}</Link></h1>
           <p className="lead-dek">{opportunity.description}</p>
         </div>
         <div className="score-block"><span>Opportunity score</span><strong>{opportunity.score.toFixed(1)}</strong><small><i className="dot peak" /> {opportunity.signal}</small></div>
@@ -145,36 +160,30 @@ function LeadOpportunity({ opportunity, movie }: { opportunity: Opportunity; mov
       <div className="lead-analysis">
         <div className="analysis-main">
           <p className="eyebrow">Why this matters</p>
-          <p>Audience discourse has shifted from anticipation to exhaustion in under 60 days, creating a rare window where critical analysis dramatically outperforms hype coverage.</p>
+          <p>{opportunity.whyItMatters}</p>
         </div>
         <div className="angles">
           <p className="eyebrow">Content angles</p>
-          <ol>
-            <li>Why we keep getting nostalgia sequels completely wrong</li>
-            <li>The 10 properties that deserve a second chance</li>
-            <li>How sequel saturation is funding original filmmaking</li>
-          </ol>
+          <ol>{opportunity.contentAngles.map((angle) => <li key={angle}>{angle}</li>)}</ol>
         </div>
         <dl className="metrics">
-          <div><dt>Volume</dt><dd>2.4M / day</dd></div>
-          <div><dt>7-day trend</dt><dd>+340%</dd></div>
-          <div><dt>Related film</dt><dd>{movie?.title || "Mission: Impossible 9"}{movie?.releaseDate ? ` / ${movie.releaseDate.slice(0, 4)}` : ""}</dd></div>
-          <div className="window"><dt>Timing</dt><dd>3-day peak window</dd></div>
+          <div><dt>Volume</dt><dd>{opportunity.volume}</dd></div>
+          <div><dt>Trend</dt><dd>{opportunity.trend}</dd></div>
+          <div><dt>Related film</dt><dd>{opportunity.tmdbTitle || "Not available"}</dd></div>
+          <div className="window"><dt>Timing</dt><dd>{opportunity.opportunityWindow}</dd></div>
         </dl>
       </div>
     </section>
   );
 }
 
-function OpportunityCard({ item, movie, number }: { item: Opportunity; movie?: HomeMovieEnrichment; number: string }) {
-  const image = movie?.posterUrl || item.image;
-  const imageAlt = movie?.posterUrl ? `${movie.title} poster` : item.imageAlt;
+function OpportunityCard({ item, number }: { item: Opportunity; number: string }) {
   const accent = categoryAccents[item.category] ?? "#1e6f52";
 
   return (
     <article className="opportunity-card" style={{ "--story-accent": accent } as React.CSSProperties}>
       <Link className="card-image-wrap" href={`/opportunities/${item.id}`}>
-        <Image src={image} alt={imageAlt} fill sizes="(max-width: 800px) 100vw, 33vw" />
+        <Image src={item.image} alt={item.imageAlt} fill priority={number === "02"} sizes="(max-width: 800px) 100vw, 33vw" />
         <div className="card-number">{number}</div>
         <div className="card-score"><span>Score</span><strong>{item.score.toFixed(1)}</strong></div>
       </Link>
@@ -183,14 +192,6 @@ function OpportunityCard({ item, movie, number }: { item: Opportunity; movie?: H
         <div className="card-meta"><span>{item.category}</span><span><i className="dot" />{item.signal}</span></div>
         <h3><Link href={`/opportunities/${item.id}`}>{item.title}</Link></h3>
         <p className="card-dek">{item.description}</p>
-        {movie && (
-          <div className="card-film-reference">
-            <span>TMDb film reference</span>
-            <strong>{movie.title}</strong>
-            {movie.releaseDate && <small>Released {movie.releaseDate}</small>}
-            {movie.overview && <p>{movie.overview}</p>}
-          </div>
-        )}
         <div className="card-angles">
           <span className="eyebrow">Editorial openings</span>
           {item.contentAngles.slice(0, 2).map((angle) => <p key={angle}>↳ {angle}</p>)}
@@ -201,22 +202,24 @@ function OpportunityCard({ item, movie, number }: { item: Opportunity; movie?: H
   );
 }
 
-function NewsRail() {
+function NewsRail({ opportunities }: { opportunities: Opportunity[] }) {
+  const lead = opportunities[0];
+
   return (
     <aside className="news-rail">
       <section>
         <div className="rail-heading"><span className="rule" />What happened today</div>
-        <ol className="news-list">{news.map(([time, title]) => <li key={time}><time>{time}</time><a href="#signals">{title}</a></li>)}</ol>
+        <ol className="news-list">{opportunities.slice(0, 5).map((opportunity) => <li key={opportunity.id}><time>{formatUtcTime(opportunity.publishedAt)}</time><Link href={`/opportunities/${opportunity.id}`}>{opportunity.title}</Link></li>)}</ol>
       </section>
       <section>
         <div className="rail-heading"><span className="rule" />All scores today</div>
-        {[['9.2', 'Cultural', '92%'], ['8.1', 'Streaming', '81%'], ['7.8', 'Craft', '78%'], ['7.4', 'Industry', '74%']].map(([score, label, width]) => (
-          <div className="score-row" key={score}><strong>{score}</strong><i><span style={{ width }} /></i><small>{label}</small></div>
+        {opportunities.slice(0, 4).map((opportunity) => (
+          <div className="score-row" key={opportunity.id}><strong>{opportunity.score.toFixed(1)}</strong><i><span style={{ width: `${opportunity.score * 10}%` }} /></i><small>{opportunity.category.split(" ")[0]}</small></div>
         ))}
       </section>
       <section>
         <div className="rail-heading"><span className="rule" />Angles / Lead signal</div>
-        {["Why we keep getting nostalgia sequels completely wrong", "The 10 properties that deserve a second chance", "How sequel saturation is quietly funding original filmmaking"].map((angle, i) => <a href="#top" className="rail-angle" key={angle}><small>Angle 0{i + 1}</small>{angle}</a>)}
+        {lead?.contentAngles.map((angle, i) => <a href="#top" className="rail-angle" key={angle}><small>Angle 0{i + 1}</small>{angle}</a>)}
       </section>
     </aside>
   );
@@ -234,31 +237,96 @@ function FilterPanel({ open, onClose }: { open: boolean; onClose: () => void }) 
   );
 }
 
-export function HomePage({ tmdbMovies = {} }: { tmdbMovies?: Record<string, HomeMovieEnrichment> }) {
+export function BriefingState({ label, message, onRetry }: { label: string; message: string; onRetry?: () => void }) {
   return (
-    <EditorialShell>
+    <section className="lead-wrap" aria-live="polite">
+      <SectionHeader label={label} count="00" />
+      <div className="lead-analysis">
+        <div className="analysis-main">
+          <p className="eyebrow">Today&apos;s briefing</p>
+          <p>{message}</p>
+          {onRetry && <button className="filter-button" onClick={onRetry}>Try again <ArrowUpRight size={14} /></button>}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function HomePage() {
+  const [requestVersion, setRequestVersion] = useState(0);
+  const [state, setState] = useState<HomePageState>({
+    status: "loading",
+    opportunities: [],
+    generatedAt: null,
+    error: null,
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadOpportunities() {
+      setState((current) => ({ ...current, status: "loading", error: null }));
+      try {
+        const response = await fetchOpportunities(controller.signal);
+        cacheOpportunities(response.opportunities);
+        setState({
+          status: "success",
+          opportunities: response.opportunities,
+          generatedAt: response.generatedAt,
+          error: null,
+        });
+      } catch (requestError) {
+        if (controller.signal.aborted) return;
+        setState({
+          status: "error",
+          opportunities: [],
+          generatedAt: null,
+          error: requestError instanceof Error
+            ? requestError.message
+            : "The briefing could not be loaded. Please try again.",
+        });
+      }
+    }
+
+    void loadOpportunities();
+    return () => controller.abort();
+  }, [requestVersion]);
+
+  const { opportunities } = state;
+  const leadOpportunity = opportunities[0];
+  const remainingOpportunities = opportunities.slice(1);
+
+  return (
+    <EditorialShell opportunities={opportunities} generatedAt={state.generatedAt}>
       <main>
         <div className="main-column">
-          <LeadOpportunity opportunity={leadOpportunity} movie={tmdbMovies[leadOpportunity.id]} />
-          <section id="signals" className="signals-section">
-            <SectionHeader label="Today's signals" count={String(opportunities.length).padStart(2, "0")} />
-            <div className="opportunity-grid">{opportunities.map((item, index) => <OpportunityCard item={item} movie={tmdbMovies[item.id]} number={String(index + 2).padStart(2, "0")} key={item.id} />)}</div>
-          </section>
+          {state.status === "loading" && <BriefingState label="Loading opportunities" message="The editorial desk is assembling today's ranked opportunities." />}
+          {state.status === "error" && <BriefingState label="Briefing unavailable" message={state.error || "The briefing could not be loaded."} onRetry={() => setRequestVersion((version) => version + 1)} />}
+          {state.status === "success" && !leadOpportunity && <BriefingState label="No opportunities" message="No opportunities met today's editorial criteria." />}
+          {state.status === "success" && leadOpportunity && (
+            <>
+              <LeadOpportunity opportunity={leadOpportunity} />
+              <section id="signals" className="signals-section">
+                <SectionHeader label="Today's signals" count={String(remainingOpportunities.length).padStart(2, "0")} />
+                <div className="opportunity-grid">{remainingOpportunities.map((item, index) => <OpportunityCard item={item} number={String(index + 2).padStart(2, "0")} key={item.id} />)}</div>
+              </section>
+            </>
+          )}
         </div>
-        <NewsRail />
+        <NewsRail opportunities={opportunities} />
       </main>
     </EditorialShell>
   );
 }
 
-export function EditorialShell({ children, active = "Today" }: { children: React.ReactNode; active?: string }) {
+export function EditorialShell({ children, active = "Today", opportunities = [], generatedAt = null }: { children: React.ReactNode; active?: string; opportunities?: Opportunity[]; generatedAt?: string | null }) {
   const [navOpen, setNavOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   return (
     <div className="site-shell">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} active={active} />
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} opportunities={opportunities} active={active} />
       <div className="content-shell">
-        <Masthead onMenu={() => setNavOpen(true)} onFilter={() => setFilterOpen(true)} />
+        <Masthead onMenu={() => setNavOpen(true)} onFilter={() => setFilterOpen(true)} generatedAt={generatedAt} count={opportunities.length} />
         {children}
         <footer className="site-footer">
           <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>

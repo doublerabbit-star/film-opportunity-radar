@@ -23,7 +23,7 @@ export function OpportunityDetail({ opportunity }: { opportunity: Opportunity })
   const saved = isSaved(opportunity.id);
 
   return (
-    <EditorialShell>
+    <EditorialShell opportunities={[opportunity]} generatedAt={opportunity.publishedAt}>
       <main className="detail-main">
         <article className="detail-article">
           <div className="detail-back"><Link href="/"><ArrowLeft size={15} />Back to today&apos;s briefing</Link><span>Opportunity / {opportunity.score.toFixed(1)}</span></div>
@@ -64,7 +64,7 @@ export function OpportunityDetail({ opportunity }: { opportunity: Opportunity })
               <ol>{opportunity.titleIdeas.map((title, index) => <li key={title}><span>0{index + 1}</span><p>{title}</p></li>)}</ol>
             </section>
           </div>
-          <footer className="detail-footer"><span>Source material</span><a href="#top">Open original signal <ExternalLink size={14} /></a></footer>
+          <footer className="detail-footer"><span>Source material</span><a href={opportunity.sourceUrl} target="_blank" rel="noreferrer">Open original signal <ExternalLink size={14} /></a></footer>
         </article>
       </main>
     </EditorialShell>
